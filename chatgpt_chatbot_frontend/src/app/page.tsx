@@ -1,101 +1,96 @@
-import Image from "next/image";
+'use client';
+
+import { useState } from 'react';
+import { AuthProvider, useAuth } from '@/components/AuthProvider';
+import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import ChatArea from '@/components/ChatArea';
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <AuthProvider>
+      <PageLayout />
+    </AuthProvider>
+  );
+}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+function PageLayout() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Header minimal />
+        <LoginPanel />
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-secondary min-h-screen flex flex-col">
+      <Header />
+      <main className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <section className="flex-1 flex flex-col h-full">
+          <ChatArea />
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
+  );
+}
+
+function LoginPanel() {
+  const { signIn, error } = useAuth();
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [inProgress, setInProgress] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInProgress(true);
+    await signIn(email);
+    setInProgress(false);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="bg-white rounded-xl shadow-md p-8 w-full max-w-sm flex flex-col gap-6"
+      style={{ borderTop: '4px solid #22d3ee' }}
+    >
+      <h2 className="text-xl font-semibold text-primary mb-2 text-center">Sign In</h2>
+      <input
+        type="email"
+        required
+        placeholder="Email"
+        className="rounded px-3 py-2 border border-gray-200 focus:ring-2 focus:ring-accent outline-none transition"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        required
+        placeholder="Password"
+        className="rounded px-3 py-2 border border-gray-200 focus:ring-2 focus:ring-accent outline-none transition"
+        value={pw}
+        onChange={e => setPw(e.target.value)}
+      />
+      <button
+        type="submit"
+        disabled={inProgress}
+        className="bg-accent w-full py-2 rounded text-white font-medium disabled:opacity-60"
+      >
+        {inProgress ? 'Signing in...' : 'Login'}
+      </button>
+      {error && <div className="text-center text-red-500 text-sm">{error}</div>}
+    </form>
   );
 }
